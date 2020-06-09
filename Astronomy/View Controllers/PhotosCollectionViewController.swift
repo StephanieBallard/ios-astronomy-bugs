@@ -28,22 +28,28 @@ class PhotosCollectionViewController: UIViewController, UICollectionViewDataSour
     
     @IBAction func goToPreviousSol(_ sender: Any?) {
         guard let solDescriptions = roverInfo?.solDescriptions else { return }
-        guard let sol = solDescription?.sol, sol > 0 else {
-            solDescription = solDescriptions.first
+        
+        guard let solDescription = solDescription,
+            let index = roverInfo?.solDescriptions.firstIndex(of: solDescription),
+            solDescription.sol > 0 else {
+                self.solDescription = solDescriptions.first
             return
         }
         
-        solDescription = solDescriptions[sol-1]
+        self.solDescription = solDescriptions[index-1]
     }
     
     @IBAction func goToNextSol(_ sender: Any?) {
         guard let solDescriptions = roverInfo?.solDescriptions else { return }
-        guard let sol = solDescription?.sol, sol < solDescriptions.count else {
-            solDescription = solDescriptions.last
+        
+        guard let solDescription = solDescription,
+            let index = roverInfo?.solDescriptions.firstIndex(of: solDescription),
+            solDescription.sol < solDescriptions.count else {
+                self.solDescription = solDescriptions.last
             return
         }
         
-        solDescription = solDescriptions[sol+1]
+        self.solDescription = solDescriptions[index+1]
     }
     
     // UICollectionViewDataSource/Delegate
@@ -93,7 +99,9 @@ class PhotosCollectionViewController: UIViewController, UICollectionViewDataSour
         if segue.identifier == "ShowDetail" {
             guard let indexPath = collectionView.indexPathsForSelectedItems?.first else { return }
             let detailVC = segue.destination as! PhotoDetailViewController
-            detailVC.photo = photoReferences[indexPath.item]
+            let reference = photoReferences[indexPath.item]
+            detailVC.imageData = cache.value(for: reference.id)
+            detailVC.photo = reference
         }
     }
     
@@ -149,7 +157,7 @@ class PhotosCollectionViewController: UIViewController, UICollectionViewDataSour
             defer { self.operations.removeValue(forKey: photoReference.id) }
             
             if let currentIndexPath = self.collectionView?.indexPath(for: cell),
-                currentIndexPath == indexPath {
+                currentIndexPath != indexPath {
                 return // Cell has been reused
             }
             
